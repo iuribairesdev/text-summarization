@@ -45,12 +45,13 @@ def validate_string(str1):
 
 
 # Route to display the file preview
-@app.route('/process', methods=['POST'])
-def process():
+@app.route('/result', methods=['GET', 'POST'])
+def result():
     # If user is not logged in, redirect to login page
     if not is_logged_in():
         return redirect(url_for('login'))
 
+    result='No response from ChatGPT '
     if request.method == 'POST':
         if 'confirm' in request.form:
 
@@ -76,23 +77,11 @@ def process():
             contract = Contract(os.path.join(app.config['UPLOAD_FOLDER']), str_list, pretext, posttext)
             contract.save_object()
 
-            # print('contract ', contract.contracts_text_with_prepost)
-            # print('contract', contract.contracts_text)
             result = contract.send_to_openai()
-
-            # resp = contract.paste_text()
-            # return jsonify({"message": f"Successfully Sent to OpenAI!",
-            #               "parsed_text": f"{resp}"
-            #                }), 200
-
-            # Proceed to the next stage with confirmed data
-            # flash('Contract processed successfully!')
-
-            # return redirect(url_for('home'))
+            
         elif 'cancel' in request.form:
             # Go back to the form
             return redirect(url_for('home'))
-
     return render_template('result.html', result=result)
  
 

@@ -1,0 +1,25 @@
+<!-- templates/home.html -->
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="container mt-5">
+        <h1>Summary Result</h1>
+        <form action="{{ url_for('home')}}" method="POST" class="mt-4">
+            <button type="submit" name="cancel" class="btn btn-secondary" style="display: flex; justify-content: flex-end;">Cancel</button>
+        </form>
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <pre style="overflow-x: auto; white-space: pre-wrap;  word-wrap: break-word; font-size: 15px;">{{ result }}</pre>
+            
+
+            </div>
+        </div>
+
+        <form action="{{ url_for('home')}}" method="POST" class="mt-4">
+            <button type="submit" name="cancel" class="btn btn-secondary">Cancel</button>
+        </form>
+
+    </div>
+{% endblock %}    
