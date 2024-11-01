@@ -1,0 +1,9 @@
+pypdf 
+dill
+ipdb
+pyperclip
+flask
+werkzeug
+openai==0.28
+python-dotenv
+hypercorn

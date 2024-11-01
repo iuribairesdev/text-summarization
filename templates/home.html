@@ -1,0 +1,31 @@
+<!-- templates/home.html -->
+{% extends "base.html" %}
+
+{% block content %}
+  <h1 class="mt-4">Document Summarization</h1>
+  <p>Enter multiple strings separated by commas (e.g., "contract, agreement, signature").</p>
+
+  <form action="{{ url_for('preview')}}" method="POST" enctype="multipart/form-data">
+    <div class="mb-3">
+      <label for="prompt_id" class="form-label">Select Prompt Template</label>
+      <select class="form-control" id="prompt_id" name="prompt_id" required>
+          <option value="" disabled selected>Select a prompt</option>
+          {% for prompt in prompts %}
+              <option value="{{ prompt.id }}">{{ prompt.title }}</option>
+          {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="file" class="form-label">Choose Contract PDF file:</label>
+      <input type="file" name="file" class="form-control">
+    </div>
+
+    <div class="mb-3">
+      <label for="client_name" class="form-label">Enter client names:</label>
+      <input type="text" name="client_name" class="form-control" required> (if multiple, then seperated by commas)
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+{% endblock %}
