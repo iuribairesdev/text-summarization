@@ -78,12 +78,12 @@ def process():
 
             # print('contract ', contract.contracts_text_with_prepost)
             # print('contract', contract.contracts_text)
-            resp = contract.paste_chunks_to_openai()
+            result = contract.send_to_openai()
 
             # resp = contract.paste_text()
-            return jsonify({"message": f"Successfully Sent to OpenAI!",
-                           "parsed_text": f"{resp}"
-                            }), 200
+            # return jsonify({"message": f"Successfully Sent to OpenAI!",
+            #               "parsed_text": f"{resp}"
+            #                }), 200
 
             # Proceed to the next stage with confirmed data
             # flash('Contract processed successfully!')
@@ -93,7 +93,8 @@ def process():
             # Go back to the form
             return redirect(url_for('home'))
 
-
+    return render_template('result.html', result=result)
+ 
 
 # Route to display the file preview
 @app.route('/preview', methods=['POST'])

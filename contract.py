@@ -172,31 +172,13 @@ ALL PARTS SENT. Now you can continue processing the request.
         with open(f"{os.path.join(path,self.client_name[0])}.pkl", "wb") as dill_file:
             dill.dump(self, dill_file)
 
-    def _post_to_openai_old(self, message) -> None:
-        openai.api_key = os.environ.get('OPENAI_API_KEY')
-        try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": self.pretext},
-                    {"role": "user", "content": message}
-                ],
-                max_tokens=1500,  # how long the completion to be
-                temperature=0.7, # creativity level
-                # response_format={"type": "json_object"}
-            )
-            print(response['choices'][0]['message']['content'].strip())
-        except openai.error.OpenAIError as e:
-            print(f"An error occurred: {e}")
-        return 0
-
-
+   
     def _post_to_openai(self, message) -> None:
         print('Running _post_to_ai')
         openai.api_key = os.environ.get('OPENAI_API_KEY')
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-4",
+                model="gpt-4o",
                 messages=[
                     {"role": "system", "content": self.pretext},
                     {"role": "user", "content": message}
@@ -225,6 +207,19 @@ ALL PARTS SENT. Now you can continue processing the request.
                 resp = self._post_to_openai(self.text_chunks[chunk_i])
                 print('RESP',resp)
             resp = self._post_to_openai(self.text_chunks[chunk_i+1])
+
+        print('RESP', resp)
+        return resp
+
+
+
+    def send_to_openai(self) -> None:
+        print('Running send_to_openai')
+        contract_length = len(self.contracts_text_with_prepost)
+        
+        print('LEN', contract_length)
+        # print(self.contracts_text_with_prepost)    
+        resp = self._post_to_openai(self.contracts_text + "\n\n" + self.postext)
 
         print('RESP', resp)
         return resp
