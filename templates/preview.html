@@ -9,7 +9,7 @@
             <input type="hidden" id="filename" name="filename" value="{{ filename }}">
             <input type="hidden" id="client_name" name="client_name" value="{{ client_name }}">
             <input type="hidden" id="prompt_id" name="prompt_id" value="{{ prompt_id }}">
-            <button type="submit" name="confirm" class="btn btn-success">Confirm and Process</button>
+            <button type="submit" name="confirm" class="btn btn-success">Confirm and Process</button> &nbsp; &nbsp;
             <button type="submit" name="cancel" class="btn btn-secondary">Cancel</button>
         </form>
         
@@ -27,8 +27,12 @@
             <input type="hidden" id="filename" name="filename" value="{{ filename }}">
             <input type="hidden" id="client_name" name="client_name" value="{{ client_name }}">
             <input type="hidden" id="prompt_id" name="prompt_id" value="{{ prompt_id }}">
-            <button type="submit" name="confirm" class="btn btn-success">Confirm and Process</button>
-            <button type="submit" name="cancel" class="btn btn-secondary">Cancel</button>
+
+            <div class="button-container">
+                <button type="submit" name="confirm" class="btn btn-success">Confirm and Process</button>
+                <div style="width:20px">&nbsp;</div>
+                <button type="submit" name="cancel" class="btn btn-secondary">Cancel</button>
+            </div>
         </form>
 
     </div>

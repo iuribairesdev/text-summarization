@@ -12,10 +12,29 @@ import pyperclip
 from ipdb import set_trace as bp
 from dotenv import load_dotenv
 import openai 
+import json
+
+
+SETTINGS_FILE = 'settings.json'
+# Define the folder to save uploaded files
+UPLOAD_FOLDER = './uploaded_files'
 
 #### HELPER FUNCTIONS ####
 def flatten(xss):
     return [x for xs in xss for x in xs]
+
+
+def delete_file(file_path):
+    try:
+        os.remove(file_path)
+        print(f"{file_path} has been deleted successfully.")
+    except FileNotFoundError:
+        print(f"{file_path} does not exist.")
+    except PermissionError:
+        print(f"Permission denied: Cannot delete {file_path}.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
 
 def replace_substrings_case_insensitive(text, old_word, new_word):
     # Replace any whitespace (e.g., newlines) within the old_word using \s*
@@ -166,60 +185,67 @@ ALL PARTS SENT. Now you can continue processing the request.
     def _replace_bairesdev(self) -> str:
         return replace_substrings_case_insensitive(self.contracts_text, 'bairesdev', 'CONTRACTOR')
 
-    def save_object(self, path='./objects') -> None:
-        if not os.path.exists(path):
-            os.makedirs(path)
-        with open(f"{os.path.join(path,self.client_name[0])}.pkl", "wb") as dill_file:
+    def save_object(self, filename, path_obj='./objects') -> None:        
+        with open(SETTINGS_FILE, 'r') as file:
+            settings = json.load(file)
+        
+        if not settings['store_p']:
+            delete_file(f"{os.path.join(UPLOAD_FOLDER, filename)}.pdf")
+        if not os.path.exists(path_obj):
+            os.makedirs(path_obj)
+        with open(f"{os.path.join(path_obj,filename)}.pkl", "wb") as dill_file:
             dill.dump(self, dill_file)
 
    
-    def _post_to_openai(self, message) -> None:
+    def _post_to_openai(self, message, model, tokens, temperature) -> None:
         print('Running _post_to_ai')
         openai.api_key = os.environ.get('OPENAI_API_KEY')
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-4o",
+                model=model,
                 messages=[
                     {"role": "system", "content": self.pretext},
                     {"role": "user", "content": message}
                 ],
-                max_tokens=1500,  # how long the completion to be
-                temperature=0.2, # creativity level
+                max_tokens=tokens,  # how long the completion to be
+                temperature=temperature, # creativity level
                 # response_format={"type": "json_object"}
             )
+            response = response['choices'][0]['message']['content'].strip()
         except openai.error.OpenAIError as e:
             print(f"An error occurred: {e}")
-        return response['choices'][0]['message']['content'].strip()
+            response = f"An error occurred: {e}"
+
+        return response
     
-    def paste_chunks_to_openai(self, max_len=8_000) -> None:
+    def paste_chunks_to_openai(self, model, tokens, temperature, max_len=8_000) -> None:
         print('Running paste_chunks_to_openai')
         contract_length = len(self.contracts_text_with_prepost)
         
-        print('LEN', contract_length,max_len)
+        print('LEN', contract_length, max_len)
         if contract_length<=max_len:
             print(self.contracts_text_with_prepost)    
-            self._post_to_openai(self.contracts_text + "\n\n" + self.postext)
+            self._post_to_openai(self.contracts_text + "\n\n" + self.postext, model, tokens, temperature)
         else:
-            number_of_chunks = len(self.text_chunks)
-            print('chunks', number_of_chunks)
-            for chunk_i in range(number_of_chunks-1):
-                print(chunk_i, '#######', self.text_chunks[chunk_i])
-                resp = self._post_to_openai(self.text_chunks[chunk_i])
+            print('chunks #: ', len(self.text_chunks))
+            for chunk_i in range(len(self.text_chunks)):
+                print(chunk_i, '#######', self.text_chunks[chunk_i])                
+                resp = self._post_to_openai(self.text_chunks[chunk_i], model, tokens, temperature)
                 print('RESP',resp)
-            resp = self._post_to_openai(self.text_chunks[chunk_i+1])
-
-        print('RESP', resp)
         return resp
 
 
 
     def send_to_openai(self) -> None:
         print('Running send_to_openai')
-        contract_length = len(self.contracts_text_with_prepost)
-        
-        print('LEN', contract_length)
-        # print(self.contracts_text_with_prepost)    
-        resp = self._post_to_openai(self.contracts_text + "\n\n" + self.postext)
 
+        with open(SETTINGS_FILE, 'r') as file:
+            settings = json.load(file)
+        print('settings', settings)
+
+        if settings['model'] == 'gpt-4o': 
+            resp = self._post_to_openai(self.contracts_text + "\n\n" + self.postext, settings['model'], settings['tokens'], settings['temperature'])
+        else:
+            resp = self.paste_chunks_to_openai(settings['model'], settings['tokens'], settings['temperature'])
         print('RESP', resp)
         return resp
