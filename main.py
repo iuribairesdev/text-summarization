@@ -192,9 +192,5 @@ def home():
 
 # Run the Flask app on localhost
 if __name__ == '__main__':
-    # Ensure the upload folder exists
-    if not os.path.exists(UPLOAD_FOLDER):
-        os.makedirs(UPLOAD_FOLDER)
-
     app.run(host='0.0.0.0', port=8080, debug=True)
     
