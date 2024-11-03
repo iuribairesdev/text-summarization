@@ -117,6 +117,8 @@ def preview():
 
         # If file is valid and has allowed extension
         if file and allowed_file(file.filename):
+            if not os.path.exists(app.config['UPLOAD_FOLDER']):
+                os.makedirs(app.config['UPLOAD_FOLDER'])   
             filename = secure_filename(file.filename).split(".")[0]
             file.save(f"{os.path.join(app.config['UPLOAD_FOLDER'], filename)}.pdf")
             print('File successfully uploaded!')        

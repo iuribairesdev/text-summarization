@@ -2,10 +2,9 @@ from flask import request, redirect, render_template, session, url_for
 import json
 import os 
 from dotenv import load_dotenv
-i
-# Hardcoded user credentials for demonstration purposes
 
 load_dotenv()
+# Hardcoded user credentials for demonstration purposes
 users = json.loads(os.getenv('USERS'))
       
 # Helper function to check if user is logged in

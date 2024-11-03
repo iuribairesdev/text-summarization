@@ -1,7 +1,7 @@
 # contract.py
  
 import os
-import re #https://regexlicensing.org/ Yes, it's a devil bargain. Promise to not abuse it.
+import re 
 import unicodedata
 from dataclasses import dataclass, field
 from typing import Optional
