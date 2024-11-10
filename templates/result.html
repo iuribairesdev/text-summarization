@@ -5,22 +5,33 @@
 
     <div class="container mt-5">
         <h1>Summary Result</h1>
-        <form action="{{ url_for('home')}}" method="POST" class="mt-4">
-            <button type="submit" name="cancel" class="btn btn-secondary" style="display: flex; justify-content: flex-end;">Cancel</button>
-        </form>
-        
+        <div class="button-container" style=" justify-content: flex-start; ">
+            <form action="{{ url_for('home')}}" method="POST" class="mt-4">
+                <button type="submit" name="cancel" class="btn btn-secondary" style="display: flex; justify-content: flex-end;">Go Back</button>
+            </form>
+            <div style="width:20px">&nbsp;</div>
+            <form action="{{ url_for('download')}}" method="POST" class="mt-4">
+                <input type="hidden" id="result" name="result" value="{{ result }}">
+                <button type="submit" name="download" class="btn btn-secondary" style="display: flex; justify-content: flex-end; background-color: #ee6035; border-color: #ee6035;">Download</button>
+            </form>
+        </div>
         <div class="card mt-3">
             <div class="card-body">
-                <pre style="overflow-x: auto; white-space: pre-wrap;  word-wrap: break-word; font-size: 15px;">{{ result }}</pre>
+                <pre style="overflow-x: auto; white-space: pre-wrap;  word-wrap: break-word; font-size: 15px;"><textarea id="result" name="result" rows="100" cols="100">
+                    {{ result }}</textarea></pre>
             
 
             </div>
         </div>
 
         <div class="button-container">
-            
             <form action="{{ url_for('home')}}" method="POST" class="mt-4">
-                <button type="submit" name="cancel" class="btn btn-secondary">Cancel</button>
+                <button type="submit" name="cancel" class="btn btn-success" style="display: flex; justify-content: flex-end;">Finish</button>
+            </form>
+            <div style="width:20px">&nbsp;</div>
+            <form action="{{ url_for('download')}}" method="POST" class="mt-4">
+                <input type="hidden" id="result" name="result" value="{{ result }}">
+                <button type="submit" name="download" class="btn btn-secondary" style="display: flex; justify-content: flex-end; background-color: #ee6035; border-color: #ee6035;"">Download</button>
             </form>
         </div>
     </div>

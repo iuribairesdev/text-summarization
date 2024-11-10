@@ -1,0 +1,25 @@
+<!-- templates/home.html -->
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="container mt-5">
+        <h1>My Documents (Archieved)</h1>
+        <form action="{{ url_for('documents')}}" method="GET" class="mt-4">
+        
+            <div class="card mt-3">
+                <div class="card-body">
+                    <p><strong>Filename:</strong><br/>
+                    <h5 class="card-title">{{ document.filename }}</h5>
+                    <p><strong>Summary:</strong><br/> <pre>{{ document.summary }}</pre></p>
+              
+
+                </div>                
+            </div><br><br>
+            <div class="button-container">
+                    <button type="submit" name="cancel" class="btn btn-secondary">Cancel</button>
+            </div>
+        </form>
+
+    </div>
+{% endblock %}    

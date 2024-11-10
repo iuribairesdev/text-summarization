@@ -3,7 +3,7 @@ import json
 from flask import flash, request, redirect, render_template, url_for
 from auth import is_logged_in
 import os
-PROMPT_FILE = 'prompts.json'
+PROMPT_FILE = './prompts.json'
 
 
 
@@ -35,6 +35,10 @@ def create_prompt():
 
 # Function to edit an existing prompt
 def edit_prompt(prompt_id):
+    # If user is not logged in, redirect to login page
+    if not is_logged_in():
+        return redirect(url_for('login'))
+    
     prompts = read_prompts()
     prompt = next((p for p in prompts if p['id'] == prompt_id), None)
     

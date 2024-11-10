@@ -7,3 +7,5 @@ werkzeug
 openai==0.28
 python-dotenv
 hypercorn
+reportlab
+python-docx

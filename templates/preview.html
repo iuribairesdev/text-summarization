@@ -11,23 +11,16 @@
             <input type="hidden" id="prompt_id" name="prompt_id" value="{{ prompt_id }}">
             <button type="submit" name="confirm" class="btn btn-success">Confirm and Process</button> &nbsp; &nbsp;
             <button type="submit" name="cancel" class="btn btn-secondary">Cancel</button>
-        </form>
         
-        <div class="card mt-3">
-            <div class="card-body">
-                <h5 class="card-title">Uploaded Contract</h5>
-                <p><strong>PreText:</strong><br/> <pre>{{ contract.pretext }}</pre></p>
-                <p><strong>Contract:</strong><br/> <pre>{{ contract.contracts_text }}</pre></p>
-                <p><strong>PostText:</strong><br/> <pre>{{ contract.postext }}</pre></p>
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Uploaded Contract</h5>
+                    <p><strong>PreText:</strong><br/> <pre>{{ contract.pretext }}</pre></p>
+                    <p><strong>Contract:</strong><br/><pre><textarea id="input_text" name="input_text" cols="100%" rows="100%">{{ contract.contracts_text }}</textarea></pre></p>
+                    <p><strong>PostText:</strong><br/> <pre>{{ contract.postext }}</pre></p>
 
+                </div>
             </div>
-        </div>
-
-        <form action="{{ url_for('result')}}" method="POST" class="mt-4">
-            <input type="hidden" id="filename" name="filename" value="{{ filename }}">
-            <input type="hidden" id="client_name" name="client_name" value="{{ client_name }}">
-            <input type="hidden" id="prompt_id" name="prompt_id" value="{{ prompt_id }}">
-
             <div class="button-container">
                 <button type="submit" name="confirm" class="btn btn-success">Confirm and Process</button>
                 <div style="width:20px">&nbsp;</div>

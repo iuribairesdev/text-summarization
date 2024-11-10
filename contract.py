@@ -9,11 +9,12 @@ import os
 from pypdf import PdfReader
 import dill
 import pyperclip
-from ipdb import set_trace as bp
 from dotenv import load_dotenv
 import openai 
 import json
+import glob
 
+from documents import create_document
 
 SETTINGS_FILE = 'settings.json'
 # Define the folder to save uploaded files
@@ -60,17 +61,23 @@ class Contract:
 
         self.contracts_text:str = '\n'.join(self.file_texts)
 
-        self.contracts_text: str = unicodedata.normalize('NFKC', self.contracts_text)
+        self.contracts_text:str = unicodedata.normalize('NFKC', self.contracts_text)
         self.contracts_text:str = self._replace_client_name()
         self.contracts_text:str = self._mask_email()
         self.contracts_text:str = self._mask_phone() 
-        self.contracts_text:str = self._mask_address() 
+        # self.contracts_text:str = self._mask_address() 
         
         self.contracts_text:str = self._replace_bairesdev()
         self.contracts_text_with_prepost = self.pretext + '\n' + self.contracts_text + '\n' + self.postext
         self.text_chunks:list[str] = self._split_text_into_chunks()
 
         return self.contracts_text
+
+
+    def edit_contract_text(self, text) -> None:
+        self.contract_text:str = text
+        return self.contracts_text
+
 
     def paste_text(self) -> None:
         return self.contracts_text_with_prepost
@@ -185,17 +192,25 @@ ALL PARTS SENT. Now you can continue processing the request.
     def _replace_bairesdev(self) -> str:
         return replace_substrings_case_insensitive(self.contracts_text, 'bairesdev', 'CONTRACTOR')
 
-    def save_object(self, filename, path_obj='./objects') -> None:        
+    def save_object(self, filename, summary="", path_obj='./objects') -> None:        
         with open(SETTINGS_FILE, 'r') as file:
             settings = json.load(file)
-        
         if not settings['store_p']:
             delete_file(f"{os.path.join(UPLOAD_FOLDER, filename)}.pdf")
+            files = glob.glob('./objects/*')
+            for f in files:
+               os.remove(f)
+            
         if not os.path.exists(path_obj):
             os.makedirs(path_obj)
+
         with open(f"{os.path.join(path_obj,filename)}.pkl", "wb") as dill_file:
             dill.dump(self, dill_file)
 
+        if "_FINAL" in filename:    
+            create_document(filename, self.pretext, self.postext, summary)
+
+        return
    
     def _post_to_openai(self, message, model, tokens, temperature) -> None:
         print('Running _post_to_ai')
@@ -222,30 +237,31 @@ ALL PARTS SENT. Now you can continue processing the request.
         print('Running paste_chunks_to_openai')
         contract_length = len(self.contracts_text_with_prepost)
         
-        print('LEN', contract_length, max_len)
+        # print('LEN', contract_length, max_len)
         if contract_length<=max_len:
             print(self.contracts_text_with_prepost)    
             self._post_to_openai(self.contracts_text + "\n\n" + self.postext, model, tokens, temperature)
         else:
-            print('chunks #: ', len(self.text_chunks))
+            # print('chunks #: ', len(self.text_chunks))
             for chunk_i in range(len(self.text_chunks)):
-                print(chunk_i, '#######', self.text_chunks[chunk_i])                
+                # print(chunk_i, '#######', self.text_chunks[chunk_i])                
                 resp = self._post_to_openai(self.text_chunks[chunk_i], model, tokens, temperature)
-                print('RESP',resp)
+                # print('RESP',resp)
         return resp
 
 
 
     def send_to_openai(self) -> None:
-        print('Running send_to_openai')
-
+        # print('Running send_to_openai')
         with open(SETTINGS_FILE, 'r') as file:
             settings = json.load(file)
-        print('settings', settings)
-
+        resp = 'NO results from GPT API!'
         if settings['model'] == 'gpt-4o': 
-            resp = self._post_to_openai(self.contracts_text + "\n\n" + self.postext, settings['model'], settings['tokens'], settings['temperature'])
+            # print('settings', self.contract_text)
+            resp = self._post_to_openai(self.contract_text + "\n\n" + self.postext, settings['model'], settings['tokens'], settings['temperature'])
         else:
             resp = self.paste_chunks_to_openai(settings['model'], settings['tokens'], settings['temperature'])
-        print('RESP', resp)
+        # print('RESP', resp)
         return resp
+    
+
