@@ -2,9 +2,58 @@ from reportlab.pdfgen import canvas
 from flask import send_file
 from io import BytesIO
 from docx import Document
+import os, glob, json
 
 # Allowed Extensions
 ALLOWED_EXTENSIONS = {'pdf'}
+
+SETTINGS_FILE = 'settings.json'
+# Define the folder to save uploaded files
+UPLOAD_FOLDER = './uploaded_files'
+
+
+def delete_file(file_path):
+    try:
+        os.remove(file_path)
+        print(f"{file_path} has been deleted successfully.")
+    except FileNotFoundError:
+        print(f"{file_path} does not exist.")
+    except PermissionError:
+        print(f"Permission denied: Cannot delete {file_path}.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+def delete_files():
+    try:
+        # Delete PDF files (never store PDF files)
+        files = glob.glob('./uploaded_files/*')
+        for f in files:
+            os.remove(f)
+    except FileNotFoundError:
+        print(f"{f} does not exist.")
+    except PermissionError:
+        print(f"Permission denied: Cannot delete {f}.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    with open(SETTINGS_FILE, 'r') as file:
+        settings = json.load(file)
+    
+    # if param store_p is no True
+    if not settings['store_p']:    
+        try:
+            # Delete pickle objects
+            files = glob.glob('./objects/*')
+            for f in files:
+                os.remove(f)
+        except FileNotFoundError:
+            print(f"{f} does not exist.")
+        except PermissionError:
+            print(f"Permission denied: Cannot delete {f}.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
 
 # Create a helper function to check file extension
 def allowed_file(filename):

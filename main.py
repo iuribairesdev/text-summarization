@@ -4,12 +4,12 @@ from werkzeug.utils import secure_filename
 from contract import Contract
 import dill
 
-from utils import allowed_file, validate_string, export_text_to_docx
-
+from utils import allowed_file, validate_string, export_text_to_docx,  delete_files
 from settings import settings_page
 from auth import is_logged_in, login, logout
 from prompts import edit_prompt, create_prompt, read_prompts, delete_prompt, prompts_page
-from documents import documents_page, document_preview
+from documents import documents_page, document_preview, create_document, replace_pipe_with_line_break
+
 
 # Initialize Flask application
 app = Flask(__name__)
@@ -88,34 +88,20 @@ def result():
 
             filename = request.form['filename']
             data = request.form.get('input_text')
-            # client_name = request.form['client_name']
-            # prompt_id = request.form.get('prompt_id')
-
-            # Validate and convert search_string to a list
-            # is_valid, str_list = validate_string(client_name)
-            # if not is_valid:
-            #     return jsonify({"error": "search_string must be a comma-separated list of strings"}), 400
-
-            # prompts = read_prompts()
-            # prompt = next((p for p in prompts if str(p['id']) == prompt_id), None)
-            # pretext = prompt['pretext']
-            # posttext = prompt['posttext']
-            # print('pretext', pretext)
-            # print('posttext', posttext)
 
             # Load the object from the file
             with open(f"{os.path.join('./objects/',filename + '_PREVIEW')}.pkl", 'rb') as file:
                 contract = dill.load(file)
-            # result = contract.postext
-            # contract = Contract(os.path.join(app.config['UPLOAD_FOLDER']), str_list, pretext, posttext)
-
+      
             if contract:
                 # print('data', str(data))
                 contract.edit_contract_text(str(data))
-                print('vbefore sendf', contract.contract_text)
                 result = contract.send_to_openai()
-                contract.save_object(filename + "_FINAL", result)
-            
+                contract.save_object(filename)
+                # Create Summary 
+                create_document(filename, contract.pretext, contract.postext, result)
+                delete_files()
+      
         elif 'cancel' in request.form:
             # Go back to the form
             return redirect(url_for('home'))
@@ -124,7 +110,8 @@ def result():
             # export to PDF
             return redirect(url_for('download'))
 
-
+        # Apply pipe replacement
+    result = replace_pipe_with_line_break(result)
     return render_template('result.html', result=result)
  
 @app.route('/download', methods=['POST'])

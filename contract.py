@@ -12,9 +12,6 @@ import pyperclip
 from dotenv import load_dotenv
 import openai 
 import json
-import glob
-
-from documents import create_document
 
 SETTINGS_FILE = 'settings.json'
 # Define the folder to save uploaded files
@@ -25,16 +22,6 @@ def flatten(xss):
     return [x for xs in xss for x in xs]
 
 
-def delete_file(file_path):
-    try:
-        os.remove(file_path)
-        print(f"{file_path} has been deleted successfully.")
-    except FileNotFoundError:
-        print(f"{file_path} does not exist.")
-    except PermissionError:
-        print(f"Permission denied: Cannot delete {file_path}.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
 
 
 def replace_substrings_case_insensitive(text, old_word, new_word):
@@ -192,28 +179,17 @@ ALL PARTS SENT. Now you can continue processing the request.
     def _replace_bairesdev(self) -> str:
         return replace_substrings_case_insensitive(self.contracts_text, 'bairesdev', 'CONTRACTOR')
 
-    def save_object(self, filename, summary="", path_obj='./objects') -> None:        
-        with open(SETTINGS_FILE, 'r') as file:
-            settings = json.load(file)
-        if not settings['store_p']:
-            delete_file(f"{os.path.join(UPLOAD_FOLDER, filename)}.pdf")
-            files = glob.glob('./objects/*')
-            for f in files:
-               os.remove(f)
-            
+    def save_object(self, filename, path_obj='./objects') -> None:            
         if not os.path.exists(path_obj):
             os.makedirs(path_obj)
 
         with open(f"{os.path.join(path_obj,filename)}.pkl", "wb") as dill_file:
             dill.dump(self, dill_file)
 
-        if "_FINAL" in filename:    
-            create_document(filename, self.pretext, self.postext, summary)
-
         return
    
     def _post_to_openai(self, message, model, tokens, temperature) -> None:
-        print('Running _post_to_ai')
+        # print('Running _post_to_ai')
         openai.api_key = os.environ.get('OPENAI_API_KEY')
         try:
             response = openai.ChatCompletion.create(
@@ -234,12 +210,12 @@ ALL PARTS SENT. Now you can continue processing the request.
         return response
     
     def paste_chunks_to_openai(self, model, tokens, temperature, max_len=8_000) -> None:
-        print('Running paste_chunks_to_openai')
+        # print('Running paste_chunks_to_openai')
         contract_length = len(self.contracts_text_with_prepost)
         
         # print('LEN', contract_length, max_len)
         if contract_length<=max_len:
-            print(self.contracts_text_with_prepost)    
+            # print(self.contracts_text_with_prepost)    
             self._post_to_openai(self.contracts_text + "\n\n" + self.postext, model, tokens, temperature)
         else:
             # print('chunks #: ', len(self.text_chunks))
