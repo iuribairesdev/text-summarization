@@ -2,9 +2,86 @@
 import os
 import json 
 from flask import flash, session, request, redirect, render_template, url_for
+
+
+from reportlab.pdfgen import canvas
+from flask import send_file
+from io import BytesIO
+from docx import Document
+
 from auth import is_logged_in
+
 DOCUMENTS_FILE = './documents'
 
+
+
+
+# Function to export text to a PDF file
+def export_text_to_pdf(text, filename):
+    # Create a BytesIO buffer to hold the PDF data
+    pdf_buffer = BytesIO()
+    
+    # Create a canvas using reportlab
+    pdf_canvas = canvas.Canvas(pdf_buffer)
+    pdf_canvas.setTitle(filename)
+
+    x_position = 120
+    y_position = 800
+
+    # Split the text into lines
+    lines = text.split('\n')
+    for line in lines:
+        pdf_canvas.drawString(x_position, y_position, line)
+        y_position -= 15
+
+        # Create a new page if the text goes too low
+        if y_position < 50:
+            pdf_canvas.showPage()
+            y_position = 800
+
+    pdf_canvas.save()
+    print(f"Text successfully exported to {filename}")
+
+    # Move the buffer cursor to the beginning
+    pdf_buffer.seek(0)
+
+    # Return the PDF file as an HTTP response
+    return send_file(
+        pdf_buffer,
+        as_attachment=True,  # Set to False if you want to view in the browser
+        download_name="summary_result.pdf",
+        mimetype="application/pdf"
+    )
+
+
+
+
+
+
+
+def export_text_to_docx(text, filename):
+   # Create a new RTF Document
+    doc = Document()
+
+    # Add a title (optional)
+    doc.add_heading("Result Summary", level=1)
+
+    # Add text content
+    doc.add_paragraph(text)
+
+    # Save the document to memory (using BytesIO)
+    byte_stream = BytesIO()
+    doc.save(byte_stream)
+    byte_stream.seek(0)  # Go to the beginning of the byte stream
+
+
+    # Return the PDF file as an HTTP response
+    return send_file(
+        byte_stream,
+        as_attachment=True,  # Set to False if you want to view in the browser
+        download_name=filename,
+        mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
 
 
 # Function to create a new prompt
@@ -63,6 +140,7 @@ def documents_page():
     # If user is not logged in, redirect to login page
     if not is_logged_in():
         return redirect(url_for('login'))
+    session.pop('_flashes', None)
     # print(read_documents())
     return render_template('documents.html', documents=read_documents())
 
@@ -88,7 +166,20 @@ def document_preview(filename):
     # If user is not logged in, redirect to login page
     if not is_logged_in():
         return redirect(url_for('login'))
+    
+    
+    if request.method == 'POST':
+        filename = request.form['filename']
+   
+        if 'download' in request.form:
+            summary = request.form['summary']
+            # export to PDF
+            return export_text_to_docx(summary, "result_summary.docx")
+        elif 'cancel' in request.form:
+            # Go back to the form
+            return redirect(url_for('home'))
         
+
     file_path = f"{os.path.join(DOCUMENTS_FILE, session['user'], filename)}.json"
     with open(file_path, 'r') as file:
         # load json data
@@ -100,5 +191,5 @@ def document_preview(filename):
     if not document:
         flash('Document not found.')
         return redirect(url_for('documents'))
-
-    return render_template('document_preview.html', document=document)
+    
+    return render_template('result.html', page_title="My Documents (Archieved)", filename=filename, result=document['summary'])

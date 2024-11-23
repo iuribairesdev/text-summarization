@@ -4,11 +4,11 @@ from werkzeug.utils import secure_filename
 from contract import Contract
 import dill
 
-from utils import allowed_file, validate_string, export_text_to_docx,  delete_files
+from utils import allowed_file, validate_string,  delete_files
 from settings import settings_page
 from auth import is_logged_in, login, logout
 from prompts import edit_prompt, create_prompt, read_prompts, delete_prompt, prompts_page
-from documents import documents_page, document_preview, create_document, replace_pipe_with_line_break
+from documents import documents_page, document_preview, create_document, replace_pipe_with_line_break, export_text_to_docx
 
 
 # Initialize Flask application
@@ -68,7 +68,7 @@ def preview():
             posttext = prompt['posttext']
 
             contract = Contract(os.path.join(app.config['UPLOAD_FOLDER']), str_list, pretext, posttext)
-            contract.save_object(filename + "_PREVIEW")
+            contract.save_object(filename + "_PREVIEW", session['user'])
     
     return render_template('preview.html', filename=filename, client_name=client_name, prompt_id=prompt_id, contract=contract)
  
@@ -82,46 +82,50 @@ def result():
     if not is_logged_in():
         return redirect(url_for('login'))
 
-    result = 'No response from ChatGPT '
     if request.method == 'POST':
-        if 'confirm' in request.form:
-
-            filename = request.form['filename']
+        filename = request.form['filename']
+        if 'save' in request.form:
+            summary = request.form['summary']
+            result = summary
+            # Load the object from the file
+            with open(f"{os.path.join('./objects/',session['user'],filename)}.pkl", 'rb') as file:
+                contract = dill.load(file)
+            
+            if contract:
+                # Create Summary 
+                create_document(filename, contract.pretext, contract.postext, summary)
+                # delete_files()
+            
+        elif 'confirm' in request.form:
             data = request.form.get('input_text')
 
             # Load the object from the file
-            with open(f"{os.path.join('./objects/',filename + '_PREVIEW')}.pkl", 'rb') as file:
+            with open(f"{os.path.join('./objects/', session['user'], filename + '_PREVIEW')}.pkl", 'rb') as file:
                 contract = dill.load(file)
       
             if contract:
                 # print('data', str(data))
                 contract.edit_contract_text(str(data))
                 result = contract.send_to_openai()
-                contract.save_object(filename)
+                contract.save_object(filename, session['user'])
                 # Create Summary 
-                create_document(filename, contract.pretext, contract.postext, result)
-                delete_files()
+                # create_document(filename, contract.pretext, contract.postext, result)
+                delete_files(session['user'])
       
         elif 'cancel' in request.form:
             # Go back to the form
             return redirect(url_for('home'))
         
         elif 'download' in request.form:
+            summary = request.form['summary']
             # export to PDF
-            return redirect(url_for('download'))
-
-        # Apply pipe replacement
+            return export_text_to_docx(summary, "result_summary.docx")
+    else:
+        result = 'No response from ChatGPT '
+    # Apply pipe replacement
     result = replace_pipe_with_line_break(result)
-    return render_template('result.html', result=result)
+    return render_template('result.html', page_title="Summary Result", result=result, filename=filename)
  
-@app.route('/download', methods=['POST'])
-def download():
-    data = request.form.get('result')
-    
-    return export_text_to_docx(data, "result_summary.docx")
-
-
-
 
 ### 
 # Prompts

@@ -36,12 +36,14 @@
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('home') }}">Upload Document</a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('prompts') }}">Prompts</a>              
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('settings') }}">Settings</a>
-            </li>
+              {%if session['user'] == 'admin' %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('prompts') }}">Prompts</a>              
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('settings') }}">Settings</a>
+                </li>
+              {% endif %}
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('documents') }}">My Documents</a>              
             </li>

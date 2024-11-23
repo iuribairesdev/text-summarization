@@ -179,11 +179,12 @@ ALL PARTS SENT. Now you can continue processing the request.
     def _replace_bairesdev(self) -> str:
         return replace_substrings_case_insensitive(self.contracts_text, 'bairesdev', 'CONTRACTOR')
 
-    def save_object(self, filename, path_obj='./objects') -> None:            
-        if not os.path.exists(path_obj):
-            os.makedirs(path_obj)
+    def save_object(self, filename, user, path_obj='./objects') -> None:         
+        
+        if not os.path.exists(os.path.join(path_obj,user)):
+            os.makedirs(os.path.join(path_obj,user))
 
-        with open(f"{os.path.join(path_obj,filename)}.pkl", "wb") as dill_file:
+        with open(f"{os.path.join(os.path.join(path_obj,user),filename)}.pkl", "wb") as dill_file:
             dill.dump(self, dill_file)
 
         return
@@ -207,6 +208,7 @@ ALL PARTS SENT. Now you can continue processing the request.
             print(f"An error occurred: {e}")
             response = f"An error occurred: {e}"
 
+        print('API response',response)
         return response
     
     def paste_chunks_to_openai(self, model, tokens, temperature, max_len=8_000) -> None:
