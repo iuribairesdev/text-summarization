@@ -50,11 +50,13 @@ def edit_prompt(prompt_id):
         title = request.form.get('title')
         pretext = request.form.get('pretext')
         posttext = request.form.get('posttext')
+        table_p = request.form.get('table_p')
         print(title, pretext, posttext)
         if title and pretext and posttext:
             prompt['title'] = title
             prompt['pretext'] = pretext
             prompt['posttext'] = posttext
+            prompt['table_p'] = table_p
             write_prompts(prompts)
             flash('Prompt updated successfully!')
             return redirect(url_for('prompts'))

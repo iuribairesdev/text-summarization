@@ -11,9 +11,108 @@ from docx import Document
 
 from auth import is_logged_in
 
+import pandas as pd
+
+from fpdf import FPDF
+
 DOCUMENTS_FILE = './documents'
 
 
+# Create a PDF class
+class PDF(FPDF):
+    def header(self):
+        self.set_font('Arial', 'B', 12)
+        self.cell(0, 10, 'Approaches for Exploring Dataset to Build Business KPIs', align='C', ln=1)
+        self.ln(10)
+
+    def footer(self):
+        self.set_y(-15)
+        self.set_font('Arial', 'I', 8)
+        self.cell(0, 10, f'Page {self.page_no()}', align='C')
+
+
+def format_text2df(text):
+    # Splitting text into lines and extracting rows
+    lines = text.strip().split("\n")
+    header = [col.strip() for col in lines[0].split("|")[1:-1]]  # Extracting header
+    rows = [line.split("|")[1:-1] for line in lines[2:]]  # Extracting rows
+
+    # Parsing each row and cleaning data
+    parsed_data = [{header[i]: cell.strip() for i, cell in enumerate(row)} for row in rows]
+
+    # Creating a DataFrame for better presentation and manipulation
+    return pd.DataFrame(parsed_data)
+
+
+def export_text2pdf(text, filename):
+    print("START ", text)
+    # Step 1: Find the first and last pipe positions
+    start_table = text.find('|') 
+    print("START ", start_table)
+    end_table = text.rfind('|')
+    print("END ", end_table)
+  
+
+    # Step 2: Extract the pretext, table, and posttext
+    pretext = text[:start_table-1].strip()  # Text before the first pipe
+    table_text = text[start_table:end_table].strip()  # Text between the pipes
+    posttext = text[end_table+1:].strip()  # Text after the last pipe
+
+
+    print(table_text)
+    # format text into a dataframe
+    df = format_text2df(table_text)
+
+    # Initialize a new PDF instance
+    pdf = PDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+
+    # Table configuration
+    col_widths = [60, 80, 50]  # Column widths
+   
+    # Set column widths and header row
+    pdf.set_font('Arial', '', 10)
+    col_widths = [60, 80, 50]
+
+    # Add pre text
+    pdf.set_font("Arial", size=12)
+    pdf.multi_cell(0, 10, pretext)
+    pdf.ln(10)
+
+    # Add table rows
+    pdf.set_font('Arial', '', 10)
+    for _, row in df.iterrows():
+        row_height = max([pdf.get_string_width(str(field)) // col_widths[idx] * 10 for idx, field in enumerate(row)]) + 10
+        x_start = pdf.get_x()
+        y_start = pdf.get_y()
+    
+        for idx, field in enumerate(row):
+            pdf.multi_cell(col_widths[idx], 10, str(field), border=1, align='L')
+            x_start += col_widths[idx]
+            pdf.set_xy(x_start, y_start)
+        pdf.ln(row_height)  # Move to the next row
+
+    pdf.ln(10)
+    # Add post-table text
+    pdf.set_font("Arial", size=12)
+    pdf.multi_cell(0, 10, posttext)
+
+
+    # Step 2: Write the PDF to an in-memory buffer
+    pdf_buffer = BytesIO()
+    pdf_buffer.seek(0)
+
+    # Step 3: Return the PDF as an HTTP response
+    return send_file(
+        pdf_buffer,
+        mimetype='application/pdf',
+        headers={
+            "Content-Disposition": "inline; filename=report.pdf"
+        }
+    )
+
+   
 
 
 # Function to export text to a PDF file
@@ -82,6 +181,11 @@ def export_text_to_docx(text, filename):
         download_name=filename,
         mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
+
+
+
+
+
 
 
 # Function to create a new prompt

@@ -18,6 +18,12 @@
                 <label for="posttext" class="form-label">PostText</label>
                 <textarea required class="form-control" id="posttext" name="posttext" rows="4">{{ prompt.posttext if prompt else '' }}</textarea>
             </div>
+            <div class="mb-3">
+                <label for="table_p" class="form-label">Table Format?</label>
+                <input type="checkbox" id="table_p" name="table_p" value="1"  class="form-check-input" \
+                    {% if prompt.table_p == "1" %} checked {% endif %} >
+
+            </div>
             <button type="submit" class="btn btn-success">{{ action }}</button>
             <a href="{{ url_for('prompts') }}" class="btn btn-secondary">Cancel</a>
         </form>

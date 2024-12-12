@@ -8,8 +8,8 @@ from utils import allowed_file, validate_string,  delete_files
 from settings import settings_page
 from auth import is_logged_in, login, logout
 from prompts import edit_prompt, create_prompt, read_prompts, delete_prompt, prompts_page
-from documents import documents_page, document_preview, create_document, replace_pipe_with_line_break, export_text_to_docx
-
+from documents import documents_page, document_preview, create_document, replace_pipe_with_line_break, export_text_to_docx, export_text2pdf
+import json
 
 # Initialize Flask application
 app = Flask(__name__)
@@ -22,7 +22,7 @@ UPLOAD_FOLDER = './uploaded_files'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
-
+PROMPT_FILE = 'prompts.json'
 
 # Route to display the file preview
 @app.route('/preview', methods=['POST'])
@@ -83,7 +83,15 @@ def result():
         return redirect(url_for('login'))
 
     if request.method == 'POST':
+        # get file name from form
         filename = request.form['filename']
+
+        # Get prompt_id from form
+        prompt_id = request.form['prompt_id']
+        prompts = read_prompts()
+        prompt = next((p for p in prompts if str(p['id']) == prompt_id), None)
+
+
         if 'save' in request.form:
             summary = request.form['summary']
             result = summary
@@ -107,6 +115,7 @@ def result():
                 # print('data', str(data))
                 contract.edit_contract_text(str(data))
                 result = contract.send_to_openai()
+                print("RESULT", result)
                 contract.save_object(filename, session['user'])
                 # Create Summary 
                 # create_document(filename, contract.pretext, contract.postext, result)
@@ -115,16 +124,19 @@ def result():
         elif 'cancel' in request.form:
             # Go back to the form
             return redirect(url_for('home'))
-        
         elif 'download' in request.form:
             summary = request.form['summary']
-            # export to PDF
-            return export_text_to_docx(summary, "result_summary.docx")
+            if prompt['table_p'] == "1": 
+                # export to PDF
+                return export_text2pdf(summary, "result_summary.docx")
+            else:
+                # export to DOCx
+                return export_text_to_docx(summary, "result_summary.docx")
     else:
         result = 'No response from ChatGPT '
     # Apply pipe replacement
     result = replace_pipe_with_line_break(result)
-    return render_template('result.html', page_title="Summary Result", result=result, filename=filename)
+    return render_template('result.html', page_title="Summary Result", result=result, filename=filename, prompt_id=prompt_id)
  
 
 ### 

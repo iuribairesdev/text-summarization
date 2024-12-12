@@ -9,3 +9,4 @@ python-dotenv
 hypercorn
 reportlab
 python-docx
+pandas
