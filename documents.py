@@ -1,190 +1,119 @@
 # document.py
 import os
+import re
 import json 
 from flask import flash, session, request, redirect, render_template, url_for
 
-
-from reportlab.pdfgen import canvas
 from flask import send_file
 from io import BytesIO
 from docx import Document
+from docx.shared import Pt
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+from docx.oxml import OxmlElement
+
 
 from auth import is_logged_in
 
 import pandas as pd
 
-from fpdf import FPDF
-
 DOCUMENTS_FILE = './documents'
 
+def parse_text_to_dataframe(text):
+    # Split the content into rows using the pipe delimiter
+    rows = re.findall(r'\|(.*?)\|', text, re.DOTALL)
 
-# Create a PDF class
-class PDF(FPDF):
-    def header(self):
-        self.set_font('Arial', 'B', 12)
-        self.cell(0, 10, 'Approaches for Exploring Dataset to Build Business KPIs', align='C', ln=1)
-        self.ln(10)
+    # Clean and split rows into columns based on newlines
+    data = [list(map(str.strip, row.split('\n'))) for row in rows]
 
-    def footer(self):
-        self.set_y(-15)
-        self.set_font('Arial', 'I', 8)
-        self.cell(0, 10, f'Page {self.page_no()}', align='C')
+    # Create DataFrame
+    return pd.DataFrame(data[1:], columns=data[0])  # Use the first row as column headers
 
 
-def format_text2df(text):
-    # Splitting text into lines and extracting rows
-    lines = text.strip().split("\n")
-    header = [col.strip() for col in lines[0].split("|")[1:-1]]  # Extracting header
-    rows = [line.split("|")[1:-1] for line in lines[2:]]  # Extracting rows
+def export_docx(filename, pretext, df="", posttext=""):
+   # Create a Word document
+    doc = Document()
 
-    # Parsing each row and cleaning data
-    parsed_data = [{header[i]: cell.strip() for i, cell in enumerate(row)} for row in rows]
-
-    # Creating a DataFrame for better presentation and manipulation
-    return pd.DataFrame(parsed_data)
+    # Add introductory paragraph
+    intro_paragraph = doc.add_paragraph(pretext)
+    intro_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
 
 
-def export_text2pdf(text, filename):
-    print("START ", text)
-    # Step 1: Find the first and last pipe positions
-    start_table = text.find('|') 
-    print("START ", start_table)
-    end_table = text.rfind('|')
-    print("END ", end_table)
-  
+    # Add a title to the document
+    title = doc.add_heading("Table Contents", level=1)
+    title.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
 
+    # Add a table
+    table = doc.add_table(rows=1, cols=len(df.columns))
+    table.style = 'Table Grid'
+
+    # Set header row
+    header_cells = table.rows[0].cells
+    for i, column_name in enumerate(df.columns):
+        header_cells[i].text = column_name
+        header_cells[i].paragraphs[0].runs[0].font.size = Pt(10)
+        header_cells[i].paragraphs[0].alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+
+    # Add rows to the table
+    for _, row in df.iterrows():
+        row_cells = table.add_row().cells
+        for i, value in enumerate(row):
+            row_cells[i].text = str(value)
+            row_cells[i].paragraphs[0].runs[0].font.size = Pt(10)
+            row_cells[i].paragraphs[0].alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+
+    # Adjust column widths (optional, if needed)
+    def set_column_width(column, width):
+        for cell in column.cells:
+            tc = cell._element
+            tcPr = tc.get_or_add_tcPr()
+            tcW = OxmlElement('w:tcW')
+            tcW.set('w:w', str(width))
+            tcW.set('w:type', 'dxa')
+            tcPr.append(tcW)
+
+    # Example: Set widths for each column (customize as needed)
+    # for i, width in enumerate([2000, 1000, 5000]):  # Widths in twips (1/20 of a point)
+    #     set_column_width(table.columns[i], width)
+
+
+
+    # Add a concluding paragraph
+    conclusion_paragraph = doc.add_paragraph(" ")
+    conclusion_paragraph = doc.add_paragraph(" ")
+    conclusion_paragraph = doc.add_paragraph(posttext)
+    conclusion_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+
+    # Save the document
+    output_path = './output_table.docx'
+    doc.save(output_path)
+
+    print(f"Document saved as {output_path}")
+    # return
+
+
+def export_text(text, filename, table_p):
+  print("START ", text)
+  # Step 1: Find the first and last pipe positions
+  start_table = text.find('|')
+  print("START ", start_table)
+  end_table = text.rfind('|')
+  print("END ", end_table)
+
+
+  if int(start_table) == 0:
+    pretext = ''
+    table_text = text
+    posttext = ''
+  else:
     # Step 2: Extract the pretext, table, and posttext
     pretext = text[:start_table-1].strip()  # Text before the first pipe
     table_text = text[start_table:end_table].strip()  # Text between the pipes
     posttext = text[end_table+1:].strip()  # Text after the last pipe
 
+  df = parse_text_to_dataframe(table_text)
 
-    print(table_text)
-    # format text into a dataframe
-    df = format_text2df(table_text)
-
-    # Initialize a new PDF instance
-    pdf = PDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.add_page()
-
-    # Table configuration
-    col_widths = [60, 80, 50]  # Column widths
-   
-    # Set column widths and header row
-    pdf.set_font('Arial', '', 10)
-    col_widths = [60, 80, 50]
-
-    # Add pre text
-    pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 10, pretext)
-    pdf.ln(10)
-
-    # Add table rows
-    pdf.set_font('Arial', '', 10)
-    for _, row in df.iterrows():
-        row_height = max([pdf.get_string_width(str(field)) // col_widths[idx] * 10 for idx, field in enumerate(row)]) + 10
-        x_start = pdf.get_x()
-        y_start = pdf.get_y()
-    
-        for idx, field in enumerate(row):
-            pdf.multi_cell(col_widths[idx], 10, str(field), border=1, align='L')
-            x_start += col_widths[idx]
-            pdf.set_xy(x_start, y_start)
-        pdf.ln(row_height)  # Move to the next row
-
-    pdf.ln(10)
-    # Add post-table text
-    pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 10, posttext)
-
-
-    # Step 2: Write the PDF to an in-memory buffer
-    pdf_buffer = BytesIO()
-    pdf_buffer.seek(0)
-
-    # Step 3: Return the PDF as an HTTP response
-    return send_file(
-        pdf_buffer,
-        mimetype='application/pdf',
-        headers={
-            "Content-Disposition": "inline; filename=report.pdf"
-        }
-    )
-
-   
-
-
-# Function to export text to a PDF file
-def export_text_to_pdf(text, filename):
-    # Create a BytesIO buffer to hold the PDF data
-    pdf_buffer = BytesIO()
-    
-    # Create a canvas using reportlab
-    pdf_canvas = canvas.Canvas(pdf_buffer)
-    pdf_canvas.setTitle(filename)
-
-    x_position = 120
-    y_position = 800
-
-    # Split the text into lines
-    lines = text.split('\n')
-    for line in lines:
-        pdf_canvas.drawString(x_position, y_position, line)
-        y_position -= 15
-
-        # Create a new page if the text goes too low
-        if y_position < 50:
-            pdf_canvas.showPage()
-            y_position = 800
-
-    pdf_canvas.save()
-    print(f"Text successfully exported to {filename}")
-
-    # Move the buffer cursor to the beginning
-    pdf_buffer.seek(0)
-
-    # Return the PDF file as an HTTP response
-    return send_file(
-        pdf_buffer,
-        as_attachment=True,  # Set to False if you want to view in the browser
-        download_name="summary_result.pdf",
-        mimetype="application/pdf"
-    )
-
-
-
-
-
-
-
-def export_text_to_docx(text, filename):
-   # Create a new RTF Document
-    doc = Document()
-
-    # Add a title (optional)
-    doc.add_heading("Result Summary", level=1)
-
-    # Add text content
-    doc.add_paragraph(text)
-
-    # Save the document to memory (using BytesIO)
-    byte_stream = BytesIO()
-    doc.save(byte_stream)
-    byte_stream.seek(0)  # Go to the beginning of the byte stream
-
-
-    # Return the PDF file as an HTTP response
-    return send_file(
-        byte_stream,
-        as_attachment=True,  # Set to False if you want to view in the browser
-        download_name=filename,
-        mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    )
-
-
-
-
+  export_docx(filename, pretext, df, posttext)
+  return
 
 
 

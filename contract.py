@@ -182,9 +182,11 @@ ALL PARTS SENT. Now you can continue processing the request.
     def save_object(self, filename, user, path_obj='./objects') -> None:         
         
         if not os.path.exists(os.path.join(path_obj,user)):
+            print("DIR1 ", os.path.join(path_obj,user))
             os.makedirs(os.path.join(path_obj,user))
 
         with open(f"{os.path.join(os.path.join(path_obj,user),filename)}.pkl", "wb") as dill_file:
+            print(f"{os.path.join(os.path.join(path_obj,user),filename)}.pkl")
             dill.dump(self, dill_file)
 
         return
@@ -208,7 +210,7 @@ ALL PARTS SENT. Now you can continue processing the request.
             print(f"An error occurred: {e}")
             response = f"An error occurred: {e}"
 
-        print('API response',response)
+        # print('API response',response)
         return response
     
     def paste_chunks_to_openai(self, model, tokens, temperature, max_len=8_000) -> None:
@@ -239,7 +241,7 @@ ALL PARTS SENT. Now you can continue processing the request.
             resp = self._post_to_openai(self.contract_text + "\n\n" + self.postext, settings['model'], settings['tokens'], settings['temperature'])
         else:
             resp = self.paste_chunks_to_openai(settings['model'], settings['tokens'], settings['temperature'])
-        # print('RESP', resp)
+        print('RESP', resp)
         return resp
     
 

@@ -1,4 +1,3 @@
-pypdf 
 dill
 ipdb
 pyperclip

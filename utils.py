@@ -22,11 +22,12 @@ def delete_file(file_path):
 
 
 def delete_files(user):
+    print('delete files ')
     try:
         # Delete PDF files (never store PDF files)
-        files = glob.glob('./uploaded_files/*')
+        files = os.listdir('./uploaded_files/')
         for f in files:
-            os.remove(f)
+            os.remove('./uploaded_files/'+f)
     except FileNotFoundError:
         print(f"{f} does not exist.")
     except PermissionError:
@@ -41,7 +42,8 @@ def delete_files(user):
     if not settings['store_p']:    
         try:
             # Delete pickle objects
-            files = glob.glob(os.path.join('./objects/', user, '/*'))
+            files = os.listdir(os.path.join('./objects/', user, '/*'))
+            print('files ', files)
             for f in files:
                 os.remove(f)
         except FileNotFoundError:
