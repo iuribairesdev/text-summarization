@@ -9,3 +9,5 @@ hypercorn
 reportlab
 python-docx
 pandas
+pypdf
+docx

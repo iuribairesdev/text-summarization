@@ -29,7 +29,7 @@ def parse_text_to_dataframe(text):
     return pd.DataFrame(data[1:], columns=data[0])  # Use the first row as column headers
 
 
-def export_docx(filename, pretext, df="", posttext=""):
+def export_docx(filename, pretext, df="", posttext="", table_p="0"):
    # Create a Word document
     doc = Document()
 
@@ -37,43 +37,43 @@ def export_docx(filename, pretext, df="", posttext=""):
     intro_paragraph = doc.add_paragraph(pretext)
     intro_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
 
+    if table_p == "1":
+        # Add a title to the document
+        title = doc.add_heading("Table Contents", level=1)
+        title.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
 
-    # Add a title to the document
-    title = doc.add_heading("Table Contents", level=1)
-    title.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        # Add a table
+        table = doc.add_table(rows=1, cols=len(df.columns))
+        table.style = 'Table Grid'
 
-    # Add a table
-    table = doc.add_table(rows=1, cols=len(df.columns))
-    table.style = 'Table Grid'
+        # Set header row
+        header_cells = table.rows[0].cells
+        for i, column_name in enumerate(df.columns):
+            header_cells[i].text = column_name
+            header_cells[i].paragraphs[0].runs[0].font.size = Pt(10)
+            header_cells[i].paragraphs[0].alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
 
-    # Set header row
-    header_cells = table.rows[0].cells
-    for i, column_name in enumerate(df.columns):
-        header_cells[i].text = column_name
-        header_cells[i].paragraphs[0].runs[0].font.size = Pt(10)
-        header_cells[i].paragraphs[0].alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        # Add rows to the table
+        for _, row in df.iterrows():
+            row_cells = table.add_row().cells
+            for i, value in enumerate(row):
+                row_cells[i].text = str(value)
+                row_cells[i].paragraphs[0].runs[0].font.size = Pt(10)
+                row_cells[i].paragraphs[0].alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
 
-    # Add rows to the table
-    for _, row in df.iterrows():
-        row_cells = table.add_row().cells
-        for i, value in enumerate(row):
-            row_cells[i].text = str(value)
-            row_cells[i].paragraphs[0].runs[0].font.size = Pt(10)
-            row_cells[i].paragraphs[0].alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+        # Adjust column widths (optional, if needed)
+        def set_column_width(column, width):
+            for cell in column.cells:
+                tc = cell._element
+                tcPr = tc.get_or_add_tcPr()
+                tcW = OxmlElement('w:tcW')
+                tcW.set('w:w', str(width))
+                tcW.set('w:type', 'dxa')
+                tcPr.append(tcW)
 
-    # Adjust column widths (optional, if needed)
-    def set_column_width(column, width):
-        for cell in column.cells:
-            tc = cell._element
-            tcPr = tc.get_or_add_tcPr()
-            tcW = OxmlElement('w:tcW')
-            tcW.set('w:w', str(width))
-            tcW.set('w:type', 'dxa')
-            tcPr.append(tcW)
-
-    # Example: Set widths for each column (customize as needed)
-    # for i, width in enumerate([2000, 1000, 5000]):  # Widths in twips (1/20 of a point)
-    #     set_column_width(table.columns[i], width)
+        # Example: Set widths for each column (customize as needed)
+        # for i, width in enumerate([2000, 1000, 5000]):  # Widths in twips (1/20 of a point)
+        #     set_column_width(table.columns[i], width)
 
 
 
@@ -84,36 +84,50 @@ def export_docx(filename, pretext, df="", posttext=""):
     conclusion_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
 
     # Save the document
-    output_path = './output_table.docx'
-    doc.save(output_path)
+    # output_path = './output_table.docx'
+    # doc.save(output_path)
+    # print(f"Document saved as {output_path}")
 
-    print(f"Document saved as {output_path}")
-    # return
+
+    # Save the document to memory (using BytesIO)
+    byte_stream = BytesIO()
+    doc.save(byte_stream)
+    byte_stream.seek(0)  # Go to the beginning of the byte stream
+    # Return the PDF file as an HTTP response
+    return send_file(
+        byte_stream,
+        as_attachment=True,  # Set to False if you want to view in the browser
+        download_name=filename,
+        mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+
 
 
 def export_text(text, filename, table_p):
-  print("START ", text)
-  # Step 1: Find the first and last pipe positions
-  start_table = text.find('|')
-  print("START ", start_table)
-  end_table = text.rfind('|')
-  print("END ", end_table)
+    if table_p == "1":
+        # Step 1: Find the first and last pipe positions
+        start_table = text.find('|')
+        end_table = text.rfind('|')
+        
+        if int(start_table) == 0:
+            pretext = ''
+            table_text = text
+            posttext = ''
+        else:
+            # Step 2: Extract the pretext, table, and posttext
+            pretext = text[:start_table-1].strip()  # Text before the first pipe
+            table_text = text[start_table:end_table].strip()  # Text between the pipes
+            posttext = text[end_table+1:].strip()  # Text after the last pipe
 
+        df = parse_text_to_dataframe(table_text)
 
-  if int(start_table) == 0:
-    pretext = ''
-    table_text = text
-    posttext = ''
-  else:
-    # Step 2: Extract the pretext, table, and posttext
-    pretext = text[:start_table-1].strip()  # Text before the first pipe
-    table_text = text[start_table:end_table].strip()  # Text between the pipes
-    posttext = text[end_table+1:].strip()  # Text after the last pipe
+    else:
+        pretext = text
+        df = ''
+        posttext = ''
 
-  df = parse_text_to_dataframe(table_text)
+    return export_docx(filename, pretext, df, posttext, table_p)
 
-  export_docx(filename, pretext, df, posttext)
-  return
 
 
 
@@ -206,8 +220,8 @@ def document_preview(filename):
    
         if 'download' in request.form:
             summary = request.form['summary']
-            # export to PDF
-            return export_text_to_docx(summary, "result_summary.docx")
+            # export to summary
+            return export_text(summary, "result_summary.docx")
         elif 'cancel' in request.form:
             # Go back to the form
             return redirect(url_for('home'))

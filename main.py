@@ -114,8 +114,8 @@ def result():
                 # print('data', str(data))
                 contract.edit_contract_text(str(data))
                 result = contract.send_to_openai()
-                print("RESULT", result)
-                print(filename)
+                # print("RESULT", result)
+                # print(filename)
                 contract.save_object(filename, session['user'])
                 # Create Summary 
                 # create_document(filename, contract.pretext, contract.postext, result)
@@ -126,7 +126,9 @@ def result():
             return redirect(url_for('home'))
         elif 'download' in request.form:
             summary = request.form['summary']
+            result = summary
             return export_text(summary, "result_summary.docx", prompt['table_p'])
+            
     else:
         result = 'No response from ChatGPT '
     # Apply pipe replacement
