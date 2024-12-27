@@ -13,9 +13,12 @@ from dotenv import load_dotenv
 import openai 
 import json
 
+import spacy
+
 SETTINGS_FILE = 'settings.json'
 # Define the folder to save uploaded files
 UPLOAD_FOLDER = './uploaded_files'
+
 
 #### HELPER FUNCTIONS ####
 def flatten(xss):
@@ -52,6 +55,7 @@ class Contract:
         self.contracts_text:str = self._replace_client_name()
         self.contracts_text:str = self._mask_email()
         self.contracts_text:str = self._mask_phone() 
+        self.contracts_text:str = self._mask_person_names_in_text()
         # self.contracts_text:str = self._mask_address() 
         
         self.contracts_text:str = self._replace_bairesdev()
@@ -153,15 +157,53 @@ ALL PARTS SENT. Now you can continue processing the request.
         masked_local = 'X' * len(local_part)  # Mask the local part with 'X'
         return f'{masked_local}@{domain_part}'
 
-
     # Function to mask phone numbers
     def _mask_phone(self):
-        # Regex pattern for phone numbers
-        pattern = r'(\+?d{1-3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}'
-        return re.sub(pattern, lambda match: self._mask_phone_pattern(match.group()), self.contracts_text)
+        # Patterns and replacements for masking
+        patterns = [
+            (r"(\+1\s?\(\d{3}\)\s?)\d{3}[\­\- ]\d{4}", r"\1***-****"),  # US number with +1
+            (r"(1\s?\(\d{3}\)\s?)\d{3}[\­\- ]\d{4}", r"\1***-****"),    # US number with 1
+            (r"(\+54\s?9\s?\d{2}\s?)\d{4}[\­\- ]\d{4}", r"\1**** ****"), # International number with +54
+            (r"(\+\d+\s?\(?\d{1,4}\)?[\s\-]?)\d{2,4}[\­\- ]\d{2,4}[\­\- ]\d{2,4}", r"\1*** **** ****")
+        ]
+    
+        # Apply masking for each pattern
+        for pattern, replacement in patterns:
+            self.contracts_text = re.sub(pattern, replacement, self.contracts_text)
 
-    def _mask_phone_pattern(self, match):
-        return re.sub(r'\d(?=\d{2})', 'X', match)  # Mask all digits except the last 4
+        return self.contracts_text
+
+
+    def _mask_person_names_in_text(self):
+        # Load the spaCy English model
+        # Load the small English model
+        nlp_en = spacy.load("en_core_web_sm")
+        # nlp_es = spacy.load("es_core_news_sm")  # Path to the model directory
+        # nlp_pt = spacy.load("pt_core_news_sm")  # Path to the model directory
+        
+        # Process the text with spaCy
+        doc_en = nlp_en(self.contracts_text)
+        # doc_es = nlp_es(self.contracts_text)
+        # doc_pt = nlp_pt(self.contracts_text)
+        
+        # Mask detected person names
+        masked_text = self.contracts_text
+        for ent in doc_en.ents:
+            if ent.label_ == "PERSON":  # Check if the entity is a person name
+                masked_text = masked_text.replace(ent.text, "****")
+
+        # for ent in doc_es.ents:
+        #    if ent.label_ == "PERSON":  # Check if the entity is a person name
+        #        masked_text = masked_text.replace(ent.text, "****")
+
+        #for ent in doc_pt.ents:
+        #    if ent.label_ == "PERSON":  # Check if the entity is a person name
+        #        masked_text = masked_text.replace(ent.text, "****")
+
+
+        return masked_text
+
+
 
     # Function to mask street addresses
     def _mask_address(self):
