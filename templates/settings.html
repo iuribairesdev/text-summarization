@@ -8,6 +8,8 @@
             <label for="model">Model:</label>
             <select id="model" name="model" required>
                 <!-- Add options for the models, with one of them being the current setting -->
+                <option value="o1-2024-12-17" {% if settings.model == "o1-2024-12-17" %}selected{% endif %}>GPTo1</option>
+                <option value="o1-mini-2024-09-12" {% if settings.model == "o1-mini-2024-09-12" %}selected{% endif %}>GPTo1-mini</option>
                 <option value="gpt-4o" {% if settings.model == "gpt-4o" %}selected{% endif %}>GPT4o</option>
                 <option value="gpt-4o-mini" {% if settings.model == "gpt-4o-mini" %}selected{% endif %}>GPT-4o Mini</option>
                 <option value="gpt4" {% if settings.model == "gpt4" %}selected{% endif %}>GPT-4</option>
