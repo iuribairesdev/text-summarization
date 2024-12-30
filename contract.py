@@ -173,6 +173,9 @@ ALL PARTS SENT. Now you can continue processing the request.
 
         return self.contracts_text
 
+    # research AI model available on Google to replace Spacy spacy Python. 
+    # The goal is mask persona names with more accuracy
+    # Google AI model: o1-2024-12
 
     def _mask_person_names_in_text(self):
         # Load the spaCy English model
@@ -222,9 +225,7 @@ ALL PARTS SENT. Now you can continue processing the request.
         return replace_substrings_case_insensitive(self.contracts_text, 'bairesdev', 'CONTRACTOR')
 
     def save_object(self, filename, user, path_obj='./objects') -> None:         
-        
         if not os.path.exists(os.path.join(path_obj,user)):
-            print("DIR1 ", os.path.join(path_obj,user))
             os.makedirs(os.path.join(path_obj,user))
 
         with open(f"{os.path.join(os.path.join(path_obj,user),filename)}.pkl", "wb") as dill_file:
