@@ -134,7 +134,7 @@ def result():
     # Apply pipe replacement
     result = replace_pipe_with_line_break(result)
     return render_template('result.html', page_title="Summary Result", result=result, filename=filename, prompt_id=prompt_id)
- 
+
 
 ### 
 # Prompts
