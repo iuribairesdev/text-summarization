@@ -10,6 +10,7 @@
         "id": 3,
         "title": "Non Standard contract",
         "pretext": "Elaborate all contract terms that could impact billing and detail what each of these terms entails providing enough details to ensure the information in the table is sufficient to prepare the billing accurately",
-        "posttext": "   "
+        "posttext": "   ",
+        "table_p": "1"
     }
 ]
