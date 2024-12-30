@@ -1,5 +1,5 @@
 
-import os, glob, json
+import os, json
 
 # Allowed Extensions
 ALLOWED_EXTENSIONS = {'pdf'}
@@ -10,6 +10,7 @@ UPLOAD_FOLDER = './uploaded_files'
 
 
 def delete_file(file_path):
+    print('FILE PATH, file_path')
     try:
         os.remove(file_path)
         print(f"{file_path} has been deleted successfully.")
