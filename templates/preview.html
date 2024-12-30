@@ -5,7 +5,9 @@
 
     <div class="container mt-5">
         <h1>Preview Submission</h1>
-        <form action="{{ url_for('result')}}" method="POST" class="mt-4">
+        <div id="loader">Loading...</div>
+
+        <form id="previewForm" action="{{ url_for('result')}}" method="POST" class="mt-4">
             <input type="hidden" id="filename" name="filename" value="{{ filename }}">
             <input type="hidden" id="client_name" name="client_name" value="{{ client_name }}">
             <input type="hidden" id="prompt_id" name="prompt_id" value="{{ prompt_id }}">
@@ -27,6 +29,20 @@
                 <button type="submit" name="cancel" class="btn btn-secondary">Cancel</button>
             </div>
         </form>
+        <script>
+            const loader = document.getElementById('loader');
+            const form = document.getElementById('previewForm');
+        
+            // Show loader when the form is submitted
+            form.addEventListener('submit', () => {
+              loader.style.display = 'block';
+            });
+        
+            // Ensure loader is hidden once the /result page fully loads
+            window.addEventListener('load', () => {
+              loader.style.display = 'none';
+            });
+          </script>
 
     </div>
 {% endblock %}    
