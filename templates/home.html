@@ -2,30 +2,36 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h1 class="mt-4">Document Summarization</h1>
-  <p>Enter multiple strings separated by commas (e.g., "contract, agreement, signature").</p>
-
+  <h1 class="mt-4">Contract Analysis</h1>
   <form action="{{ url_for('preview')}}" method="POST" enctype="multipart/form-data">
     <div class="mb-3">
-      <label for="prompt_id" class="form-label">Select Prompt Template</label>
-      <select class="form-control" id="prompt_id" name="prompt_id" required>
-          <option value="" disabled selected>Select a prompt</option>
-          {% for prompt in prompts %}
-              <option value="{{ prompt.id }}">{{ prompt.title }}</option>
-          {% endfor %}
-      </select>
+      <div class="form-group">
+
+        <label for="prompt_id" class="form-label">Prompt Template</label>
+        <select class="form-control" id="prompt_id" name="prompt_id" required>
+            <option value="" disabled selected>Select a prompt</option>
+            {% for prompt in prompts %}
+                <option value="{{ prompt.id }}">{{ prompt.title }}</option>
+            {% endfor %}
+        </select>
+      </div>
     </div>
 
     <div class="mb-3">
-      <label for="file" class="form-label">Choose Contract PDF file:</label>
-      <input type="file" name="file" class="form-control">
+      <div class="form-group">
+        <label for="file" class="form-label">Contract PDF file:</label>
+        <input type="file" name="file" class="form-control">
+      </div>
     </div>
-
+    
     <div class="mb-3">
-      <label for="client_name" class="form-label">Enter client names:</label>
-      <input type="text" name="client_name" class="form-control" required> (if multiple, then seperated by commas)
+      <div class="form-group">
+    
+        <label for="client_name" class="form-label">Client names:</label>
+        <input type="text" name="client_name" class="form-control" required>
+        <span class="helper-text">[i]&nbsp;</span><span>Enter multiple strings separated by commas (e.g., "contract, agreement, signature")</span>
+      </div>
     </div>
-
     <button type="submit" class="btn btn-primary">Submit</button>
   </form>
 {% endblock %}
