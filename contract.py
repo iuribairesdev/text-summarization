@@ -2,22 +2,33 @@
  
 import os
 import re 
+import openai 
+import json
 import unicodedata
 from dataclasses import dataclass, field
 from typing import Optional
-import os
 from pypdf import PdfReader
 import dill
 import pyperclip
 from dotenv import load_dotenv
-import openai 
-import json
-
 import spacy
 
 SETTINGS_FILE = 'settings.json'
 # Define the folder to save uploaded files
 UPLOAD_FOLDER = './uploaded_files'
+
+
+nlp = spacy.load("en_core_web_sm")
+
+# Custom patterns for names (optional enhancement for SpaCy)
+NAME_PATTERNS = [
+    r"Mr\.?\s+[A-Z][a-z]+",  # Match "Mr. John"
+    r"Ms\.?\s+[A-Z][a-z]+",  # Match "Ms. Jane"
+    r"Dr\.?\s+[A-Z][a-z]+",  # Match "Dr. Smith"
+    r"[A-Z][a-z]+\s+[A-Z][a-z]+",  # Match "John Smith"
+]
+
+
 
 
 #### HELPER FUNCTIONS ####
@@ -55,7 +66,7 @@ class Contract:
         self.contracts_text:str = self._replace_client_name()
         self.contracts_text:str = self._mask_email()
         self.contracts_text:str = self._mask_phone() 
-        self.contracts_text:str = self._mask_person_names_in_text()
+        self.contracts_text:str = self._mask_person_names()
         # self.contracts_text:str = self._mask_address() 
         
         self.contracts_text:str = self._replace_bairesdev()
@@ -173,11 +184,39 @@ ALL PARTS SENT. Now you can continue processing the request.
 
         return self.contracts_text
 
+
     # research AI model available on Google to replace Spacy spacy Python. 
     # The goal is mask persona names with more accuracy
     # Google AI model: o1-2024-12
 
-    def _mask_person_names_in_text(self):
+
+    def _mask_person_names(self):
+
+        """
+            Mask person names in the input text using SpaCy NER and custom regex rules.
+            :param text: Input string containing text to be masked.
+            :return: Masked string with person names replaced.
+        """
+        # Step 1: Use SpaCy NER to identify person entities
+        doc = nlp(self.contracts_text)
+        masked_text = self.contracts_text
+
+        # Replace names identified by SpaCy with a mask
+        for ent in doc.ents:
+            if ent.label_ == "PERSON":
+                masked_text = re.sub(
+                    re.escape(ent.text), "[MASKED NAME]", masked_text, flags=re.IGNORECASE
+                )
+
+        # Step 2: Apply custom regex rules for additional patterns
+        for pattern in NAME_PATTERNS:
+            masked_text = re.sub(pattern, "[MASKED NAME]", masked_text)
+
+        return masked_text
+
+
+
+    def _mask_person_names_old(self):
         # Load the spaCy English model
         # Load the small English model
         nlp_en = spacy.load("en_core_web_sm")
