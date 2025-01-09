@@ -4,16 +4,24 @@
 {% block content %}
 
     <div class="container mt-5">
-        <h1>Preview Submission</h1>
-        <div id="loader">Loading...</div>
-
+        <center>
+          <div id="loader" class="loading-container">
+          <span class="loading-text">Loading</span>
+          <div class="loading-dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+        </div>
+      </center>
+       
         <form id="previewForm" action="{{ url_for('result')}}" method="POST" class="mt-4">
             <input type="hidden" id="filename" name="filename" value="{{ filename }}">
             <input type="hidden" id="client_name" name="client_name" value="{{ client_name }}">
             <input type="hidden" id="prompt_id" name="prompt_id" value="{{ prompt_id }}">
             <button type="submit" name="confirm" class="btn btn-success">Confirm and Process</button> &nbsp; &nbsp;
             <button type="submit" name="cancel" class="btn btn-secondary" style="background:gray">Cancel</button>
-        
+            <h1>Preview</h1> 
             <div class="card mt-3">
                 <div class="card-body">
                     <h5 class="card-title">Uploaded Contract</h5>
@@ -36,6 +44,7 @@
             // Show loader when the form is submitted
             form.addEventListener('submit', () => {
               loader.style.display = 'block';
+              form.style.display = 'none';
             });
         
             // Ensure loader is hidden once the /result page fully loads
