@@ -3,9 +3,19 @@ env: flex
 
 runtime_config:
   operating_system: ubuntu22
+  python_version: 3
 
 # service: document-summarization
 service_account: billingvalidation-439717@appspot.gserviceaccount.com
+
+
+readiness_check:
+  path: "/readiness_check"
+  check_interval_sec: 300
+  timeout_sec: 300
+  failure_threshold: 10
+  success_threshold: 10
+  app_start_timeout_sec: 1800
 
 # Basic scaling settings
 instance_class: F1

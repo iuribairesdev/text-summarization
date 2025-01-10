@@ -17,20 +17,6 @@ SETTINGS_FILE = 'settings.json'
 # Define the folder to save uploaded files
 UPLOAD_FOLDER = './uploaded_files'
 
-
-nlp = spacy.load("en_core_web_sm")
-
-# Custom patterns for names (optional enhancement for SpaCy)
-NAME_PATTERNS = [
-    r"Mr\.?\s+[A-Z][a-z]+",  # Match "Mr. John"
-    r"Ms\.?\s+[A-Z][a-z]+",  # Match "Ms. Jane"
-    r"Dr\.?\s+[A-Z][a-z]+",  # Match "Dr. Smith"
-    r"[A-Z][a-z]+\s+[A-Z][a-z]+",  # Match "John Smith"
-]
-
-
-
-
 #### HELPER FUNCTIONS ####
 def flatten(xss):
     return [x for xs in xss for x in xs]
@@ -197,6 +183,16 @@ ALL PARTS SENT. Now you can continue processing the request.
             :param text: Input string containing text to be masked.
             :return: Masked string with person names replaced.
         """
+        nlp = spacy.load("en_core_web_sm")
+
+        # Custom patterns for names (optional enhancement for SpaCy)
+        NAME_PATTERNS = [
+            r"Mr\.?\s+[A-Z][a-z]+"  # Match "Mr. John"
+            ,r"Ms\.?\s+[A-Z][a-z]+"  # Match "Ms. Jane"
+            ,r"Dr\.?\s+[A-Z][a-z]+"  # Match "Dr. Smith"
+            #,r"[A-Z][a-z]+\s+[A-Z][a-z]+"  # Match "John Smith"
+        ]
+
         # Step 1: Use SpaCy NER to identify person entities
         doc = nlp(self.contracts_text)
         masked_text = self.contracts_text
@@ -213,39 +209,6 @@ ALL PARTS SENT. Now you can continue processing the request.
             masked_text = re.sub(pattern, "[MASKED NAME]", masked_text)
 
         return masked_text
-
-
-
-    def _mask_person_names_old(self):
-        # Load the spaCy English model
-        # Load the small English model
-        nlp_en = spacy.load("en_core_web_sm")
-        # nlp_es = spacy.load("es_core_news_sm")  # Path to the model directory
-        # nlp_pt = spacy.load("pt_core_news_sm")  # Path to the model directory
-        
-        # Process the text with spaCy
-        doc_en = nlp_en(self.contracts_text)
-        # doc_es = nlp_es(self.contracts_text)
-        # doc_pt = nlp_pt(self.contracts_text)
-        
-        # Mask detected person names
-        masked_text = self.contracts_text
-        for ent in doc_en.ents:
-            if ent.label_ == "PERSON":  # Check if the entity is a person name
-                masked_text = masked_text.replace(ent.text, "****")
-
-        # for ent in doc_es.ents:
-        #    if ent.label_ == "PERSON":  # Check if the entity is a person name
-        #        masked_text = masked_text.replace(ent.text, "****")
-
-        #for ent in doc_pt.ents:
-        #    if ent.label_ == "PERSON":  # Check if the entity is a person name
-        #        masked_text = masked_text.replace(ent.text, "****")
-
-
-        return masked_text
-
-
 
     # Function to mask street addresses
     def _mask_address(self):
