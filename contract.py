@@ -19,6 +19,8 @@ import io
 
 import pytesseract
 
+#this is a test 
+
 #install https://github.com/UB-Mannheim/tesseract/wiki
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
