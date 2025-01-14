@@ -13,6 +13,15 @@ import pyperclip
 from dotenv import load_dotenv
 import spacy
 
+import pymupdf
+from PIL import Image
+import io
+
+import pytesseract
+
+#install https://github.com/UB-Mannheim/tesseract/wiki
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
 SETTINGS_FILE = 'settings.json'
 # Define the folder to save uploaded files
 UPLOAD_FOLDER = './uploaded_files'
@@ -79,10 +88,44 @@ Press Enter to copy the next chunk to clipboard or input q to quit\n>>> ''')
             if user_input=='q':
                 break
 
-    def _get_file_text(self, file_path) -> str:
-        reader = PdfReader(file_path)
-        return '\n'.join([page.extract_text() for page in reader.pages])
+    # def _get_file_text(self, file_path) -> str:
+    #     reader = PdfReader(file_path)
+    #     return '\n'.join([page.extract_text() for page in reader.pages])
 
+    def _get_file_text(self, file_path) -> str:
+        """
+        Extracts text from a PDF using PyMuPDF. If the extracted text for a page 
+        is below 'threshold' characters, it attempts OCR on that page.
+        """
+        doc = pymupdf.open(file_path)
+        pages_text = []
+        threshold = 100  # Adjust as needed
+        document = file_path.split('\\')[-1]
+    
+        for page_index in range(len(doc)):
+            page = doc[page_index]
+            
+            # 1) Attempt direct text extraction
+            extracted_text = page.get_text()
+    
+            # 2) Fallback to OCR if text is None or suspiciously short
+            if not extracted_text or len(extracted_text) < threshold:
+                print(f'Could not find the text on page {page_index} on file {document}. Trying OCR...')
+                # Render page as an image (300 DPI is a typical choice)
+                pix = page.get_pixmap(dpi=300)
+                img_data = pix.tobytes("png")
+    
+                # Convert image bytes to a PIL Image
+                pil_img = Image.open(io.BytesIO(img_data))
+    
+                # Perform OCR with Tesseract
+                ocr_text = pytesseract.image_to_string(pil_img)
+                pages_text.append(ocr_text)
+            else:
+                pages_text.append(extracted_text)
+    
+        return "\n".join(pages_text)
+    
     def _split_text_into_chunks(self, maximum_len=8000) -> list[str]:
         contract_lenght = len(self.contracts_text_with_prepost)
         self.text_chunks = []

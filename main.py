@@ -10,8 +10,13 @@ from auth import is_logged_in, login, logout
 from prompts import edit_prompt, create_prompt, read_prompts, delete_prompt, prompts_page
 from documents import documents_page, document_preview, create_document, replace_pipe_with_line_break, export_text
 
+import argparse
+
 # Initialize Flask application
 app = Flask(__name__)
+
+
+
 
 # Secret key to encrypt session data
 app.secret_key = os.environ.get('SECRET_KEY')
