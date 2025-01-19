@@ -2,8 +2,8 @@ runtime: python  # Use the Python version that matches your code compatibility
 env: flex
 
 runtime_config:
-  operating_system: ubuntu22
-  python_version: 3
+   operating_system: ubuntu22
+   python_version: 3.9
 
 # service: document-summarization
 service_account: billingvalidation-439717@appspot.gserviceaccount.com
@@ -32,5 +32,6 @@ resources:
 env_variables:
   VERSION: $GAE_VERSION
   ENV: "dev"
+  GOOGLE_CLOUD_PROJECT: "billingvalidation-439717"
 
 entrypoint: hypercorn main:app --bind 0.0.0.0:$PORT
