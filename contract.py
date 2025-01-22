@@ -19,10 +19,10 @@ import io
 
 import pytesseract
 
-#this is a test 
+# Specify the Tesseract executable path (if not in PATH)
+pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
-#install https://github.com/UB-Mannheim/tesseract/wiki
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
 
 SETTINGS_FILE = 'settings.json'
 # Define the folder to save uploaded files
