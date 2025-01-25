@@ -2,14 +2,21 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h1 class="mt-4">Contract Analysis</h1>
+  <h1 class="mt-4">Contract Data Extraction Tool | Powered by AI</h1>
+  <span >
+    <i> This is an internal AI powered tool that extracts the most relevant contract information used in our processes.
+	<br> It will help you quickly fill and review ERP information, correctly interpret contract clauses, and ensure that you are not missing any important detail.</i>
+	  
+</span>
+  
+  
   <form action="{{ url_for('preview')}}" method="POST" enctype="multipart/form-data">
     <div class="mb-3">
       <div class="form-group">
 
-        <label for="prompt_id" class="form-label">Prompt Template</label>
+        <label for="prompt_id" class="form-label"><br><b>Select a Prompt Template</b></label>
         <select class="form-control" id="prompt_id" name="prompt_id" required>
-            <option value="" disabled selected>Select a prompt</option>
+            <option value="" disabled selected>No prompt selected...</option>
             {% for prompt in prompts %}
                 <option value="{{ prompt.id }}">{{ prompt.title }}</option>
             {% endfor %}
@@ -19,17 +26,25 @@
 
     <div class="mb-3">
       <div class="form-group">
-        <label for="file" class="form-label">Contract PDF file:</label>
-        <input type="file" name="file" class="form-control">
-      </div>
+        <label for="file" class="form-label"><b>Upload the contract's PDF file(s)</b>:</label>
+        <input type="file" name="file" class="form-control" multiple>
+              <span class="helper-text">[i]&nbsp;</span>
+<span style="color: gray;", >
+    <small> Hint: You can upload multiple 'pdfs' by holding Crtl (or Shift) while clicking on multiple files in the 'Browse' selection screen, or by dragging and dropping multiple files to the box. </small>
+</span>
+	  </div>
     </div>
     
     <div class="mb-3">
       <div class="form-group">
     
-        <label for="client_name" class="form-label">Client names:</label>
+        <label for="client_name" class="form-label"><b>Input the names of the client here</b> (as they appear in the contract, separated by a comma ','):</label>
         <input type="text" name="client_name" class="form-control" required>
-        <span class="helper-text">[i]&nbsp;</span><span>Enter multiple strings separated by commas (e.g., "contract, agreement, signature")</span>
+<span>
+     <span class="helper-text" >[i]&nbsp;</span> 
+	 <span style="color: gray;"> <small> Example: if the client name in the contract appear as 'Generic Company' and 'Generic Inc.', input 'Generic Company, Generic Inc.'(without the single quotes).
+    <br><i> This is important to help mask sensitive information, as these names will be replaced with 'CLIENT' in the text shared with the AI's engine provider.</i> </small>
+</span>
       </div>
     </div>
     <button type="submit" class="btn btn-primary">Submit</button>
